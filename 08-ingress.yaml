@@ -1,0 +1,101 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: outline-ingress
+  namespace: outline
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.middlewares: outline-security-headers@kubernetescrd,outline-site-rate-limit@kubernetescrd
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - notes.gabouchieno.com
+      secretName: outline-tls-public
+  rules:
+    - host: notes.gabouchieno.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: outline
+                port:
+                  number: 80
+---
+# Strict rate limit on the magic link request endpoint — 5 attempts per 15 min per IP
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: outline-auth-ingress
+  namespace: outline
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.middlewares: outline-auth-rate-limit@kubernetescrd,outline-security-headers@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: notes.gabouchieno.com
+      http:
+        paths:
+          - path: /auth/email
+            pathType: Prefix
+            backend:
+              service:
+                name: outline
+                port:
+                  number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: minio-s3-public-ingress
+  namespace: outline
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - s3.gabouchieno.com
+      secretName: minio-s3-tls-public
+  rules:
+    - host: s3.gabouchieno.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: minio
+                port:
+                  number: 9000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: minio-console-ingress
+  namespace: outline
+  annotations:
+    cert-manager.io/cluster-issuer: internal-ca
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - minio.svc.lan
+      secretName: minio-tls
+  rules:
+    - host: minio.svc.lan
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: minio
+                port:
+                  number: 9001

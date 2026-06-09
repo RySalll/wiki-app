@@ -1,0 +1,220 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: outline
+  namespace: outline
+  labels:
+    app: outline
+    tier: app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: outline
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: outline
+        tier: app
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: node1
+
+      # node1 has the control-plane NoSchedule taint; tolerate it
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+
+      hostAliases:
+        - ip: "142.251.2.109"
+          hostnames:
+            - "smtp.gmail.com"
+
+      containers:
+        - name: outline
+          image: outlinewiki/outline:0.82.0
+          ports:
+            - containerPort: 3000
+
+          env:
+            # Secrets
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: outline-secrets
+                  key: SECRET_KEY
+            - name: UTILS_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: outline-secrets
+                  key: UTILS_SECRET
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: outline-secrets
+                  key: DATABASE_URL
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: outline-secrets
+                  key: REDIS_URL
+            - name: SMTP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: outline-secrets
+                  key: SMTP_PASSWORD
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: outline-secrets
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: outline-secrets
+                  key: AWS_SECRET_ACCESS_KEY
+
+            # Config from ConfigMap
+            - name: URL
+              valueFrom:
+                configMapKeyRef:
+                  name: outline-config
+                  key: URL
+            - name: COLLABORATION_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: outline-config
+                  key: COLLABORATION_URL
+            - name: NODE_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: outline-config
+                  key: NODE_ENV
+            - name: FORCE_HTTPS
+              valueFrom:
+                configMapKeyRef:
+                  name: outline-config
+                  key: FORCE_HTTPS
+            - name: PGSSLMODE
+              valueFrom:
+                configMapKeyRef:
+                  name: outline-config
+                  key: PGSSLMODE
+            - name: LOG_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: outline-config
+                  key: LOG_LEVEL
+            - name: NODE_OPTIONS
+              valueFrom:
+                configMapKeyRef:
+                  name: outline-config
+                  key: NODE_OPTIONS
+            - name: SMTP_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: outline-config
+                  key: SMTP_HOST
+            - name: SMTP_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: outline-config
+                  key: SMTP_PORT
+            - name: SMTP_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: outline-config
+                  key: SMTP_USERNAME
+            - name: SMTP_FROM_EMAIL
+              valueFrom:
+                configMapKeyRef:
+                  name: outline-config
+                  key: SMTP_FROM_EMAIL
+            - name: SMTP_REPLY_EMAIL
+              valueFrom:
+                configMapKeyRef:
+                  name: outline-config
+                  key: SMTP_REPLY_EMAIL
+            - name: SMTP_SECURE
+              valueFrom:
+                configMapKeyRef:
+                  name: outline-config
+                  key: SMTP_SECURE
+            - name: AWS_REGION
+              valueFrom:
+                configMapKeyRef:
+                  name: outline-config
+                  key: AWS_REGION
+            - name: AWS_S3_UPLOAD_BUCKET_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: outline-config
+                  key: AWS_S3_UPLOAD_BUCKET_URL
+            - name: AWS_S3_UPLOAD_BUCKET_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: outline-config
+                  key: AWS_S3_UPLOAD_BUCKET_NAME
+            - name: AWS_S3_FORCE_PATH_STYLE
+              valueFrom:
+                configMapKeyRef:
+                  name: outline-config
+                  key: AWS_S3_FORCE_PATH_STYLE
+            - name: AWS_S3_ACL
+              valueFrom:
+                configMapKeyRef:
+                  name: outline-config
+                  key: AWS_S3_ACL
+            - name: FILE_STORAGE
+              valueFrom:
+                configMapKeyRef:
+                  name: outline-config
+                  key: FILE_STORAGE
+
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "200m"
+            limits:
+              memory: "1.5Gi"
+              cpu: "1000m"
+
+          livenessProbe:
+            httpGet:
+              path: /_health
+              port: 3000
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+
+          readinessProbe:
+            httpGet:
+              path: /_health
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: outline
+  namespace: outline
+  labels:
+    app: outline
+    tier: app
+spec:
+  selector:
+    app: outline
+  ports:
+    - name: http
+      port: 80
+      targetPort: 3000

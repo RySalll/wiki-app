@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: outline-config
+  namespace: outline
+data:
+  URL: "https://notes.gabouchieno.com"
+  COLLABORATION_URL: "wss://notes.gabouchieno.com"
+  NODE_ENV: "production"
+  FORCE_HTTPS: "false"
+  PGSSLMODE: "disable"
+  LOG_LEVEL: "info"
+  NODE_OPTIONS: "--dns-result-order=ipv4first"
+  SMTP_HOST: "smtp.gmail.com"
+  SMTP_PORT: "587"
+  SMTP_USERNAME: "ryansalloom.1@gmail.com"
+  SMTP_FROM_EMAIL: "ryansalloom.1@gmail.com"
+  SMTP_REPLY_EMAIL: "ryansalloom.1@gmail.com"
+  SMTP_SECURE: "false"
+  AWS_REGION: "us-east-1"
+  AWS_S3_UPLOAD_BUCKET_URL: "https://s3.gabouchieno.com"
+  AWS_S3_UPLOAD_BUCKET_NAME: "outline-files"
+  AWS_S3_FORCE_PATH_STYLE: "true"
+  AWS_S3_ACL: "private"
+  FILE_STORAGE: "s3"
+  FILE_STORAGE_UPLOAD_MAX_SIZE: "26214400"

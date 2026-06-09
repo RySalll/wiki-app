@@ -1,0 +1,37 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: security-headers
+  namespace: outline
+spec:
+  headers:
+    customResponseHeaders:
+      Permissions-Policy: "camera=(), microphone=(), geolocation=(), payment=(), usb=(), bluetooth=()"
+      Cross-Origin-Opener-Policy: "same-origin"
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: auth-rate-limit
+  namespace: outline
+spec:
+  rateLimit:
+    average: 5
+    period: 15m
+    burst: 5
+    sourceCriterion:
+      ipStrategy:
+        depth: 1
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: site-rate-limit
+  namespace: outline
+spec:
+  rateLimit:
+    average: 100
+    burst: 200
+    sourceCriterion:
+      ipStrategy:
+        depth: 1
