@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx-app
+  template:
+    metadata:
+      labels:
+        app: nginx-app
+    spec:
+      nodeSelector:
+        node-role.kubernetes.io/worker: "worker"
+
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app: nginx-app
+
+      initContainers:
+        - name: render-html
+          image: alpine:3.20
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              apk add --no-cache gettext &&
+              envsubst < /config/index.html > /work/index.html
+          env:
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          volumeMounts:
+            - name: html-config
+              mountPath: /config
+            - name: html-runtime
+              mountPath: /work
+
+      containers:
+        - name: nginx
+          image: nginx:stable
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: html-runtime
+              mountPath: /usr/share/nginx/html
+
+      volumes:
+        - name: html-config
+          configMap:
+            name: nginx-html
+        - name: html-runtime
+          emptyDir: {}

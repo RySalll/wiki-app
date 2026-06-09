@@ -1,1 +1,18 @@
-01-secrets.yaml
+# Secrets - never commit these
+**/01-secrets.yaml
+apps/outline-k8s/outline.yaml
+
+# TLS private keys
+**/*.key
+
+# SSH keys
+**/.ssh/
+**/id_ed25519
+**/id_ed25519.pub
+
+# Database dumps
+*.sql
+
+# Scratch files
+/v
+/vk

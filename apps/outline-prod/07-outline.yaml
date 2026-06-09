@@ -36,6 +36,18 @@ spec:
           hostnames:
             - "smtp.gmail.com"
 
+      initContainers:
+        - name: patch-bundle
+          image: outlinewiki/outline:0.82.0
+          command: ["/bin/sh", "-c"]
+          args:
+            - cp /opt/outline/build/app/assets/index.mujR-VSd.js /patched/ &&
+              sed -i 's/maxLength:1e3,canUpdate:a\.update/maxLength:1e5,canUpdate:a.update/g'
+              /patched/index.mujR-VSd.js && echo 'Bundle patched OK'
+          volumeMounts:
+            - name: patched-bundle
+              mountPath: /patched
+
       containers:
         - name: outline
           image: outlinewiki/outline:0.82.0
@@ -202,6 +214,21 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 3
+
+          volumeMounts:
+            - name: patched-bundle
+              mountPath: /opt/outline/build/app/assets/index.mujR-VSd.js
+              subPath: index.mujR-VSd.js
+            - name: api-index-patch
+              mountPath: /opt/outline/build/server/routes/api/index.js
+              subPath: index.js
+
+      volumes:
+        - name: patched-bundle
+          emptyDir: {}
+        - name: api-index-patch
+          configMap:
+            name: outline-api-index-patch
 ---
 apiVersion: v1
 kind: Service

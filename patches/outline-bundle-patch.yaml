@@ -1,0 +1,23 @@
+# This patch is applied by an initContainer at pod startup.
+# It copies the Outline frontend JS bundle and increases the max document
+# length from 1,000 chars (1e3) to 100,000 chars (1e5) using sed.
+#
+# The patched file is written to an emptyDir volume and mounted over:
+#   /opt/outline/build/app/assets/index.mujR-VSd.js
+#
+# To apply: this is embedded in apps/outline-prod/07-outline.yaml as an initContainer.
+# sed command: s/maxLength:1e3,canUpdate:a\.update/maxLength:1e5,canUpdate:a.update/g
+
+# initContainer spec (already in 07-outline.yaml):
+#
+# initContainers:
+#   - name: patch-bundle
+#     image: outlinewiki/outline:0.82.0
+#     command: ["/bin/sh", "-c"]
+#     args:
+#       - cp /opt/outline/build/app/assets/index.mujR-VSd.js /patched/ &&
+#         sed -i 's/maxLength:1e3,canUpdate:a\.update/maxLength:1e5,canUpdate:a.update/g'
+#         /patched/index.mujR-VSd.js && echo 'Bundle patched OK'
+#     volumeMounts:
+#       - name: patched-bundle
+#         mountPath: /patched

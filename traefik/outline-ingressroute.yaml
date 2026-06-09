@@ -1,0 +1,21 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: outline-auth-post-route
+  namespace: outline
+spec:
+  entryPoints:
+    - web
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`notes.gabouchieno.com`) && PathPrefix(`/auth/email`) && Method(`POST`)
+      priority: 200
+      middlewares:
+        - name: auth-rate-limit
+        - name: security-headers
+      services:
+        - name: outline
+          port: 80
+  tls:
+    secretName: outline-tls-public

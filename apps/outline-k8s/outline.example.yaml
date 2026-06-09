@@ -1,0 +1,95 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: outline
+  namespace: outline
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: outline
+  template:
+    metadata:
+      labels:
+        app: outline
+    spec:
+      hostAliases:
+         - ip: "142.251.2.109"
+           hostnames:
+             - "smtp.gmail.com"
+
+      containers:
+        - name: outline
+          image: outlinewiki/outline:latest
+          ports:
+            - containerPort: 3000
+
+          env:
+            # --- Core Secrets ---
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: outline-secrets
+                  key: SECRET_KEY
+            - name: UTILS_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: outline-secrets
+                  key: UTILS_SECRET
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: outline-secrets
+                  key: DATABASE_URL
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: outline-secrets
+                  key: REDIS_URL
+
+            # --- App Config ---
+            - name: URL
+              value: "http://YOUR_NODE_IP:30005"
+            - name: COLLABORATION_URL
+              value: "ws://YOUR_NODE_IP:30005"
+            - name: NODE_ENV
+              value: "production"
+            - name: FORCE_HTTPS
+              value: "false"
+            - name: PGSSLMODE
+              value: "disable"
+            - name: LOG_LEVEL
+              value: "debug"
+
+            # --- SMTP (MAGIC LINK LOGIN) ---
+            - name: SMTP_HOST
+              value: "smtp.gmail.com"
+            - name: SMTP_PORT
+              value: "587"
+            - name: SMTP_USERNAME
+              value: "REPLACE_ME"
+            - name: SMTP_PASSWORD
+              value: "REPLACE_ME"
+            - name: SMTP_FROM_EMAIL
+              value: "REPLACE_ME"
+            - name: SMTP_REPLY_EMAIL
+              value: "REPLACE_ME"
+            - name: SMTP_SECURE
+              value: "false"
+            - name: NODE_OPTIONS
+              value: "--dns-result-order=ipv4first"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: outline
+  namespace: outline
+spec:
+  type: NodePort
+  selector:
+    app: outline
+  ports:
+    - name: http
+      port: 80
+      targetPort: 3000
+      nodePort: 30005

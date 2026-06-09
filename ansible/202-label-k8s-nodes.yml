@@ -1,0 +1,21 @@
+---
+- name: Label Kubernetes nodes
+  hosts: k3s_master
+  become: true
+  tasks:
+    - name: Label control plane node
+      command: >
+        kubectl label node node1 node-role.kubernetes.io/control-plane=control-plane
+        --overwrite
+      changed_when: false
+
+- name: Label worker nodes
+  hosts: k3s_workers
+  become: true
+  tasks:
+    - name: Label worker node
+      command: >
+        kubectl label node {{ inventory_hostname }} node-role.kubernetes.io/worker=worker
+        --overwrite
+      delegate_to: node1
+      changed_when: false

@@ -1,0 +1,124 @@
+apiVersion: v1
+data:
+  index.js: |-
+    "use strict";
+
+    Object.defineProperty(exports, "__esModule", {
+      value: true
+    });
+    exports.default = void 0;
+    var _koa = _interopRequireDefault(require("koa"));
+    var _koaBody = _interopRequireDefault(require("koa-body"));
+    var _koaRouter = _interopRequireDefault(require("koa-router"));
+    var _koaUseragent = _interopRequireDefault(require("koa-useragent"));
+    var _env = _interopRequireDefault(require("./../../env"));
+    var _errors = require("./../../errors");
+    var _coaleseBody = _interopRequireDefault(require("./../../middlewares/coaleseBody"));
+    var _PluginManager = require("./../../utils/PluginManager");
+    var _apiKeys = _interopRequireDefault(require("./apiKeys"));
+    var _attachments = _interopRequireDefault(require("./attachments"));
+    var _auth = _interopRequireDefault(require("./auth"));
+    var _authenticationProviders = _interopRequireDefault(require("./authenticationProviders"));
+    var _collections = _interopRequireDefault(require("./collections"));
+    var _comments = _interopRequireDefault(require("./comments/comments"));
+    var _cron = _interopRequireDefault(require("./cron"));
+    var _developer = _interopRequireDefault(require("./developer"));
+    var _documents = _interopRequireDefault(require("./documents"));
+    var _events = _interopRequireDefault(require("./events"));
+    var _fileOperations = _interopRequireDefault(require("./fileOperations"));
+    var _groupMemberships = _interopRequireDefault(require("./groupMemberships"));
+    var _groups = _interopRequireDefault(require("./groups"));
+    var _installation = _interopRequireDefault(require("./installation"));
+    var _integrations = _interopRequireDefault(require("./integrations"));
+    var _apiResponse = _interopRequireDefault(require("./middlewares/apiResponse"));
+    var _apiTracer = _interopRequireDefault(require("./middlewares/apiTracer"));
+    var _editor = _interopRequireDefault(require("./middlewares/editor"));
+    var _notifications = _interopRequireDefault(require("./notifications"));
+    var _pins = _interopRequireDefault(require("./pins"));
+    var _reactions = _interopRequireDefault(require("./reactions"));
+    var _revisions = _interopRequireDefault(require("./revisions"));
+    var _searches = _interopRequireDefault(require("./searches"));
+    var _shares = _interopRequireDefault(require("./shares"));
+    var _stars = _interopRequireDefault(require("./stars"));
+    var _subscriptions = _interopRequireDefault(require("./subscriptions"));
+    var _suggestions = _interopRequireDefault(require("./suggestions"));
+    var _teams = _interopRequireDefault(require("./teams"));
+    var _urls = _interopRequireDefault(require("./urls"));
+    var _userMemberships = _interopRequireDefault(require("./userMemberships"));
+    var _users = _interopRequireDefault(require("./users"));
+    var _views = _interopRequireDefault(require("./views"));
+    function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
+    const api = new _koa.default();
+    const router = new _koaRouter.default();
+
+    // middlewares
+    api.use((0, _koaBody.default)({
+      multipart: true,
+      jsonLimit: "16mb",
+      textLimit: "16mb",
+      formidable: {
+        maxFileSize: Math.max(_env.default.FILE_STORAGE_UPLOAD_MAX_SIZE, _env.default.FILE_STORAGE_IMPORT_MAX_SIZE),
+        maxFieldsSize: 10 * 1024 * 1024
+      }
+    }));
+    api.use((0, _coaleseBody.default)());
+    api.use(_koaUseragent.default);
+    api.use((0, _apiTracer.default)());
+    api.use((0, _apiResponse.default)());
+    api.use((0, _editor.default)());
+
+    // Register plugin API routes before others to allow for overrides
+    _PluginManager.PluginManager.getHooks(_PluginManager.Hook.API).forEach(hook => router.use("/", hook.value.routes()));
+
+    // routes
+    router.use("/", _auth.default.routes());
+    router.use("/", _authenticationProviders.default.routes());
+    router.use("/", _events.default.routes());
+    router.use("/", _users.default.routes());
+    router.use("/", _collections.default.routes());
+    router.use("/", _comments.default.routes());
+    router.use("/", _documents.default.routes());
+    router.use("/", _pins.default.routes());
+    router.use("/", _revisions.default.routes());
+    router.use("/", _views.default.routes());
+    router.use("/", _apiKeys.default.routes());
+    router.use("/", _searches.default.routes());
+    router.use("/", _shares.default.routes());
+    router.use("/", _stars.default.routes());
+    router.use("/", _subscriptions.default.routes());
+    router.use("/", _suggestions.default.routes());
+    router.use("/", _teams.default.routes());
+    router.use("/", _integrations.default.routes());
+    router.use("/", _notifications.default.routes());
+    router.use("/", _attachments.default.routes());
+    router.use("/", _cron.default.routes());
+    router.use("/", _groups.default.routes());
+    router.use("/", _groupMemberships.default.routes());
+    router.use("/", _fileOperations.default.routes());
+    router.use("/", _urls.default.routes());
+    router.use("/", _userMemberships.default.routes());
+    router.use("/", _reactions.default.routes());
+    if (!_env.default.isCloudHosted) {
+      router.use("/", _installation.default.routes());
+    }
+    if (_env.default.isDevelopment) {
+      router.use("/", _developer.default.routes());
+    }
+    router.post("*", ctx => {
+      ctx.throw((0, _errors.NotFoundError)("Endpoint not found"));
+    });
+    router.get("*", ctx => {
+      ctx.throw((0, _errors.NotFoundError)("Endpoint not found"));
+    });
+
+    // Router is embedded in a Koa application wrapper, because koa-router does not
+    // allow middleware to catch any routes which were not explicitly defined.
+    api.use(router.routes());
+    api.use(router.allowedMethods());
+    var _default = exports.default = api;
+kind: ConfigMap
+metadata:
+  annotations:
+      {"apiVersion":"v1","data":{"index.js":"\"use strict\";\n\nObject.defineProperty(exports, \"__esModule\", {\n  value: true\n});\nexports.default = void 0;\nvar _koa = _interopRequireDefault(require(\"koa\"));\nvar _koaBody = _interopRequireDefault(require(\"koa-body\"));\nvar _koaRouter = _interopRequireDefault(require(\"koa-router\"));\nvar _koaUseragent = _interopRequireDefault(require(\"koa-useragent\"));\nvar _env = _interopRequireDefault(require(\"./../../env\"));\nvar _errors = require(\"./../../errors\");\nvar _coaleseBody = _interopRequireDefault(require(\"./../../middlewares/coaleseBody\"));\nvar _PluginManager = require(\"./../../utils/PluginManager\");\nvar _apiKeys = _interopRequireDefault(require(\"./apiKeys\"));\nvar _attachments = _interopRequireDefault(require(\"./attachments\"));\nvar _auth = _interopRequireDefault(require(\"./auth\"));\nvar _authenticationProviders = _interopRequireDefault(require(\"./authenticationProviders\"));\nvar _collections = _interopRequireDefault(require(\"./collections\"));\nvar _comments = _interopRequireDefault(require(\"./comments/comments\"));\nvar _cron = _interopRequireDefault(require(\"./cron\"));\nvar _developer = _interopRequireDefault(require(\"./developer\"));\nvar _documents = _interopRequireDefault(require(\"./documents\"));\nvar _events = _interopRequireDefault(require(\"./events\"));\nvar _fileOperations = _interopRequireDefault(require(\"./fileOperations\"));\nvar _groupMemberships = _interopRequireDefault(require(\"./groupMemberships\"));\nvar _groups = _interopRequireDefault(require(\"./groups\"));\nvar _installation = _interopRequireDefault(require(\"./installation\"));\nvar _integrations = _interopRequireDefault(require(\"./integrations\"));\nvar _apiResponse = _interopRequireDefault(require(\"./middlewares/apiResponse\"));\nvar _apiTracer = _interopRequireDefault(require(\"./middlewares/apiTracer\"));\nvar _editor = _interopRequireDefault(require(\"./middlewares/editor\"));\nvar _notifications = _interopRequireDefault(require(\"./notifications\"));\nvar _pins = _interopRequireDefault(require(\"./pins\"));\nvar _reactions = _interopRequireDefault(require(\"./reactions\"));\nvar _revisions = _interopRequireDefault(require(\"./revisions\"));\nvar _searches = _interopRequireDefault(require(\"./searches\"));\nvar _shares = _interopRequireDefault(require(\"./shares\"));\nvar _stars = _interopRequireDefault(require(\"./stars\"));\nvar _subscriptions = _interopRequireDefault(require(\"./subscriptions\"));\nvar _suggestions = _interopRequireDefault(require(\"./suggestions\"));\nvar _teams = _interopRequireDefault(require(\"./teams\"));\nvar _urls = _interopRequireDefault(require(\"./urls\"));\nvar _userMemberships = _interopRequireDefault(require(\"./userMemberships\"));\nvar _users = _interopRequireDefault(require(\"./users\"));\nvar _views = _interopRequireDefault(require(\"./views\"));\nfunction _interopRequireDefault(e) { return e \u0026\u0026 e.__esModule ? e : { default: e }; }\nconst api = new _koa.default();\nconst router = new _koaRouter.default();\n\n// middlewares\napi.use((0, _koaBody.default)({\n  multipart: true,\n  jsonLimit: \"16mb\",\n  textLimit: \"16mb\",\n  formidable: {\n    maxFileSize: Math.max(_env.default.FILE_STORAGE_UPLOAD_MAX_SIZE, _env.default.FILE_STORAGE_IMPORT_MAX_SIZE),\n    maxFieldsSize: 10 * 1024 * 1024\n  }\n}));\napi.use((0, _coaleseBody.default)());\napi.use(_koaUseragent.default);\napi.use((0, _apiTracer.default)());\napi.use((0, _apiResponse.default)());\napi.use((0, _editor.default)());\n\n// Register plugin API routes before others to allow for overrides\n_PluginManager.PluginManager.getHooks(_PluginManager.Hook.API).forEach(hook =\u003e router.use(\"/\", hook.value.routes()));\n\n// routes\nrouter.use(\"/\", _auth.default.routes());\nrouter.use(\"/\", _authenticationProviders.default.routes());\nrouter.use(\"/\", _events.default.routes());\nrouter.use(\"/\", _users.default.routes());\nrouter.use(\"/\", _collections.default.routes());\nrouter.use(\"/\", _comments.default.routes());\nrouter.use(\"/\", _documents.default.routes());\nrouter.use(\"/\", _pins.default.routes());\nrouter.use(\"/\", _revisions.default.routes());\nrouter.use(\"/\", _views.default.routes());\nrouter.use(\"/\", _apiKeys.default.routes());\nrouter.use(\"/\", _searches.default.routes());\nrouter.use(\"/\", _shares.default.routes());\nrouter.use(\"/\", _stars.default.routes());\nrouter.use(\"/\", _subscriptions.default.routes());\nrouter.use(\"/\", _suggestions.default.routes());\nrouter.use(\"/\", _teams.default.routes());\nrouter.use(\"/\", _integrations.default.routes());\nrouter.use(\"/\", _notifications.default.routes());\nrouter.use(\"/\", _attachments.default.routes());\nrouter.use(\"/\", _cron.default.routes());\nrouter.use(\"/\", _groups.default.routes());\nrouter.use(\"/\", _groupMemberships.default.routes());\nrouter.use(\"/\", _fileOperations.default.routes());\nrouter.use(\"/\", _urls.default.routes());\nrouter.use(\"/\", _userMemberships.default.routes());\nrouter.use(\"/\", _reactions.default.routes());\nif (!_env.default.isCloudHosted) {\n  router.use(\"/\", _installation.default.routes());\n}\nif (_env.default.isDevelopment) {\n  router.use(\"/\", _developer.default.routes());\n}\nrouter.post(\"*\", ctx =\u003e {\n  ctx.throw((0, _errors.NotFoundError)(\"Endpoint not found\"));\n});\nrouter.get(\"*\", ctx =\u003e {\n  ctx.throw((0, _errors.NotFoundError)(\"Endpoint not found\"));\n});\n\n// Router is embedded in a Koa application wrapper, because koa-router does not\n// allow middleware to catch any routes which were not explicitly defined.\napi.use(router.routes());\napi.use(router.allowedMethods());\nvar _default = exports.default = api;"},"kind":"ConfigMap","metadata":{"annotations":{},"name":"outline-api-index-patch","namespace":"outline"}}
+  name: outline-api-index-patch
+  namespace: outline
